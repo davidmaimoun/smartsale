@@ -10,30 +10,24 @@ const Settings: React.FC = () => {
     consumerSecret: '',
   });
 
-  const [testing, setTesting] = useState(false);
-  const [setSaving] = useState(false);
-  const [testResult, setTestResult] = useState<{
+  const [connecting, setConnecting] = useState(false);
+  const [connectResult, setConnectResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
-  const [saveResult, setSaveResult] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfig({ ...config, [e.target.name]: e.target.value });
-    setTestResult(null);
-    setSaveResult(null);
+    setConnectResult(null);
   };
 
   const connectToStore = async () => {
-    setTesting(true);
-    setTestResult(null);
-    setSaving(true);
-    setSaveResult(null);
+    setConnecting(true);
+  
 
     try {
       // 1️⃣ Tester la connexion
       const test = await wooCommerceAPI.testConnection(config);
-      setTestResult(test);
 
       if (!test.success) {
         // Si le test échoue, on arrête ici
@@ -46,7 +40,8 @@ const Settings: React.FC = () => {
 
       // 2️⃣ Sauvegarder la configuration si test OK
       await wooCommerceAPI.saveConfig(config);
-      setSaveResult('Configuration saved successfully!');
+      
+      setConnectResult(test);
 
       return {
         success: true,
@@ -56,15 +51,15 @@ const Settings: React.FC = () => {
 
     } catch (error) {
       // Gestion des erreurs globales
-      const msg = error?.message || 'An error occurred';
+      const msg = error instanceof Error ? error.message : 'An error occurred';
+
       return {
         success: false,
         stage: 'unknown',
         message: msg,
       };
     } finally {
-      setTesting(false);
-      setSaving(false);
+      setConnecting(false);
     }
   };
 
@@ -141,36 +136,8 @@ const Settings: React.FC = () => {
             </div>
           </div>
 
-          {testResult && (
-            <div
-              style={{
-                padding: '1rem',
-                background: testResult.success
-                  ? 'rgba(16, 185, 129, 0.1)'
-                  : 'rgba(239, 68, 68, 0.1)',
-                borderRadius: '0.5rem',
-                border: `1px solid ${
-                  testResult.success
-                    ? 'rgba(16, 185, 129, 0.2)'
-                    : 'rgba(239, 68, 68, 0.2)'
-                }`,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-              }}
-            >
-              {testResult.success ? (
-                <CheckCircle size={20} color="#10b981" />
-              ) : (
-                <XCircle size={20} color="#ef4444" />
-              )}
-              <span style={{ color: testResult.success ? '#10b981' : '#ef4444' }}>
-                {testResult.message}
-              </span>
-            </div>
-          )}
 
-          {saveResult && (
+          {connectResult && (
             <div
               style={{
                 padding: '1rem',
@@ -183,7 +150,7 @@ const Settings: React.FC = () => {
               }}
             >
               <CheckCircle size={20} color="#10b981" />
-              <span style={{ color: '#10b981' }}>{saveResult}</span>
+              <span style={{ color: '#10b981' }}>{connectResult.message}</span>
             </div>
           )}
 
@@ -191,9 +158,9 @@ const Settings: React.FC = () => {
             <button
               className="btn btn-primary"
               onClick={connectToStore}
-              disabled={testing || !config.storeUrl || !config.consumerKey || !config.consumerSecret}
+              disabled={connecting || !config.storeUrl || !config.consumerKey || !config.consumerSecret}
             >
-              {testing ? 'Connecting to the store...' : 'Connection'}
+              {connecting ? 'Connecting to the store...' : 'Connection'}
             </button>
             
           </div>
