@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
       );
       setMetrics(data);
     } catch (err) {
-      setError('Failed to fetch metrics. Please check your WooCommerce connection.');
+      setError("Please connect to your WooCommerce store from the 'Settings' page.");
       console.error(err);
     } finally {
       setLoading(false);

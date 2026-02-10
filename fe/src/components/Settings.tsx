@@ -24,31 +24,46 @@ const Settings: React.FC = () => {
     setSaveResult(null);
   };
 
-  const handleTestConnection = async () => {
+  const connectToStore = async () => {
     setTesting(true);
     setTestResult(null);
-    try {
-      const result = await wooCommerceAPI.testConnection(config);
-      setTestResult(result);
-    } catch (error) {
-      setTestResult({
-        success: false,
-        message: 'Failed to connect. Please check your credentials.',
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const handleSaveConfig = async () => {
     setSaving(true);
     setSaveResult(null);
+
     try {
+      // 1️⃣ Tester la connexion
+      const test = await wooCommerceAPI.testConnection(config);
+      setTestResult(test);
+
+      if (!test.success) {
+        // Si le test échoue, on arrête ici
+        return {
+          success: false,
+          stage: 'test',
+          message: test.message || 'Test failed',
+        };
+      }
+
+      // 2️⃣ Sauvegarder la configuration si test OK
       await wooCommerceAPI.saveConfig(config);
       setSaveResult('Configuration saved successfully!');
+
+      return {
+        success: true,
+        stage: 'save',
+        message: 'Test passed and configuration saved!',
+      };
+
     } catch (error) {
-      setSaveResult('Failed to save configuration.');
+      // Gestion des erreurs globales
+      const msg = error?.message || 'An error occurred';
+      return {
+        success: false,
+        stage: 'unknown',
+        message: msg,
+      };
     } finally {
+      setTesting(false);
       setSaving(false);
     }
   };
@@ -175,19 +190,12 @@ const Settings: React.FC = () => {
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               className="btn btn-primary"
-              onClick={handleTestConnection}
+              onClick={connectToStore}
               disabled={testing || !config.storeUrl || !config.consumerKey || !config.consumerSecret}
             >
-              {testing ? 'Testing...' : 'Test Connection'}
+              {testing ? 'Connecting to the store...' : 'Connection'}
             </button>
-            <button
-              className="btn btn-primary"
-              onClick={handleSaveConfig}
-              disabled={saving || !config.storeUrl || !config.consumerKey || !config.consumerSecret}
-            >
-              <Save size={18} />
-              {saving ? 'Saving...' : 'Save Configuration'}
-            </button>
+            
           </div>
         </div>
       </div>

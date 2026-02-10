@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { wooCommerceAPI } from '../services/api'
 import { Package, ShoppingCart, Star, Calendar, TrendingUp, BarChart3 } from 'lucide-react'
 

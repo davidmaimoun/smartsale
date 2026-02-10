@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Star, TrendingUp, TrendingDown, AlertTriangle, Award } from 'lucide-react';
+import { Star, AlertTriangle, Award } from 'lucide-react';
 import { wooCommerceAPI } from '../services/api';
 
 interface RatedProduct {

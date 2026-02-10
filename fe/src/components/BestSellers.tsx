@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Package, DollarSign, ShoppingBag, Award } from 'lucide-react';
+import { Package, DollarSign, ShoppingBag, Award } from 'lucide-react';
 import { wooCommerceAPI } from '../services/api';
 
 interface BestSellerProduct {
