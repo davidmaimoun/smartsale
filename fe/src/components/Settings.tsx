@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { wooCommerceAPI } from '../services/api';
 import type { WooCommerceConfig } from '../types';
 
@@ -7,7 +7,7 @@ const Settings: React.FC = () => {
   const [config, setConfig] = useState<WooCommerceConfig>({
     storeUrl: '',
     consumerKey: '',
-    consumerSecret: '',
+    consumerSecret: 'cs_e2403b065efee48155156b84fc76aefd001735dc',
   });
 
   const [connecting, setConnecting] = useState(false);
@@ -22,46 +22,39 @@ const Settings: React.FC = () => {
   };
 
   const connectToStore = async () => {
-    setConnecting(true);
-  
+  setConnecting(true);
+  setConnectResult(null);
 
-    try {
-      // 1️⃣ Tester la connexion
-      const test = await wooCommerceAPI.testConnection(config);
+  try {
+    const test = await wooCommerceAPI.testConnection(config);
 
-      if (!test.success) {
-        // Si le test échoue, on arrête ici
-        return {
-          success: false,
-          stage: 'test',
-          message: test.message || 'Test failed',
-        };
-      }
-
-      // 2️⃣ Sauvegarder la configuration si test OK
-      await wooCommerceAPI.saveConfig(config);
-      
-      setConnectResult(test);
-
-      return {
-        success: true,
-        stage: 'save',
-        message: 'Test passed and configuration saved!',
-      };
-
-    } catch (error) {
-      // Gestion des erreurs globales
-      const msg = error instanceof Error ? error.message : 'An error occurred';
-
-      return {
+    console.log(test)
+    if (!test.success) {
+      setConnectResult({
         success: false,
-        stage: 'unknown',
-        message: msg,
-      };
-    } finally {
-      setConnecting(false);
+        message: test.message || 'Connection test failed',
+      });
+      return;
     }
-  };
+
+    setConnectResult({
+      success: true,
+      message:  test.message || 'Connection successful and configuration saved!',
+    });
+
+  } catch (error) {
+    const msg =
+      error instanceof Error ? error.message : 'An error occurred';
+
+    console.log(msg)
+    setConnectResult({
+      success: false,
+      message: 'Authentication failed - Please check your keys.',
+    });
+  } finally {
+    setConnecting(false);
+  }
+};
 
   return (
     <div>
@@ -141,18 +134,29 @@ const Settings: React.FC = () => {
             <div
               style={{
                 padding: '1rem',
-                background: 'rgba(16, 185, 129, 0.1)',
+                background: connectResult.success
+                  ? 'rgba(16, 185, 129, 0.1)'
+                  : 'rgba(239, 68, 68, 0.1)',
                 borderRadius: '0.5rem',
-                border: '1px solid rgba(16, 185, 129, 0.2)',
+                border: connectResult.success
+                  ? '1px solid rgba(16, 185, 129, 0.2)'
+                  : '1px solid rgba(239, 68, 68, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.75rem',
               }}
             >
-              <CheckCircle size={20} color="#10b981" />
-              <span style={{ color: '#10b981' }}>{connectResult.message}</span>
+              {connectResult.success ? (
+                <CheckCircle size={20} color="#10b981" />
+              ) : (
+                <XCircle size={20} color="#ef4444" />
+              )}
+              <span style={{ color: connectResult.success ? '#10b981' : '#ef4444' }}>
+                {connectResult.message}
+              </span>
             </div>
           )}
+
 
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button

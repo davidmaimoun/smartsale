@@ -28,15 +28,9 @@ export const wooCommerceAPI = {
     return response.data;
   },
 
-  // Test WooCommerce connection
+  // Connect WooCommerce connection
   testConnection: async (config: WooCommerceConfig): Promise<{ success: boolean; message: string }> => {
-    const response = await api.post('/woocommerce/test', config);
-    return response.data;
-  },
-
-  // Save WooCommerce configuration
-  saveConfig: async (config: WooCommerceConfig): Promise<{ success: boolean }> => {
-    const response = await api.post('/woocommerce/config', config);
+    const response = await api.post('/woocommerce/connect', config);
     return response.data;
   },
 

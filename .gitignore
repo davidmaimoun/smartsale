@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-*.txt
+apikey.txt
 venv
 test

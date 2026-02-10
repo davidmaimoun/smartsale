@@ -45,117 +45,69 @@ def health_check():
     """Health check endpoint"""
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
-@app.route('/api/woocommerce/test', methods=['POST'])
-def test_woocommerce_connection():
-    """Test WooCommerce API connection"""
+@app.route('/api/woocommerce/connect', methods=['POST'])
+def connect_woocommerce():
+    """Test connection and save WooCommerce config if successful"""
+
     try:
         data = request.json
         store_url = data.get('storeUrl', '').strip()
         consumer_key = data.get('consumerKey', '').strip()
         consumer_secret = data.get('consumerSecret', '').strip()
-        
+
         if not all([store_url, consumer_key, consumer_secret]):
             return jsonify({
                 'success': False,
-                'message': 'All fields are required (Store URL, Consumer Key, Consumer Secret)'
+                'message': 'All fields are required'
             }), 400
-        
-        # Remove trailing slash from URL
+
+        # Remove trailing slash
         if store_url.endswith('/'):
             store_url = store_url[:-1]
-        
-        # Check if URL is localhost/HTTP
+
         is_localhost = 'localhost' in store_url or '127.0.0.1' in store_url
-        
-        print(f"Testing connection to: {store_url}")
-        print(f"Is localhost: {is_localhost}")
-        print(f"Consumer Key: {consumer_key[:10]}...")
-        
+
+        # Create Woo API instance
         test_api = API(
             url=store_url,
             consumer_key=consumer_key,
             consumer_secret=consumer_secret,
             version="wc/v3",
             timeout=15,
-            verify_ssl=not is_localhost,  # Disable SSL verification for localhost
-            query_string_auth=is_localhost  # Use query string auth for HTTP
+            verify_ssl=not is_localhost,
+            query_string_auth=is_localhost
         )
-        
-        # Try to fetch a simple endpoint first
-        try:
-            response = test_api.get("")
-            print(f"Root response status: {response.status_code}")
-        except Exception as e:
-            print(f"Root endpoint error: {str(e)}")
-        
-        # Try to fetch products (simpler than system_status)
+
+        # Test connection
         response = test_api.get("products", params={"per_page": 1})
-        
-        print(f"Products response status: {response.status_code}")
-        print(f"Response content: {response.text[:200]}...")
-        
         if response.status_code == 200:
+            # Save config only if success
+            woo_config['url'] = store_url
+            woo_config['consumer_key'] = consumer_key
+            woo_config['consumer_secret'] = consumer_secret
+
             return jsonify({
                 'success': True,
-                'message': f'✅ Connection successful! Store is accessible at {store_url}'
+                'message': 'Connected to your store !'
             })
+
         elif response.status_code == 401:
             return jsonify({
                 'success': False,
-                'message': '❌ Authentication failed. Please check your Consumer Key and Secret.'
-            }), 400
-        elif response.status_code == 404:
-            return jsonify({
-                'success': False,
-                'message': f'❌ WooCommerce API not found at {store_url}. Make sure WooCommerce is installed and REST API is enabled.'
-            }), 400
-        else:
-            return jsonify({
-                'success': False,
-                'message': f'❌ Connection failed with status code: {response.status_code}'
-            }), 400
-            
-    except Exception as e:
-        error_msg = str(e)
-        print(f"Connection error: {error_msg}")
-        
-        # Provide helpful error messages
-        if 'connection' in error_msg.lower():
-            return jsonify({
-                'success': False,
-                'message': f'❌ Cannot connect to {data.get("storeUrl", "store")}. Make sure the URL is correct and the server is running.'
-            }), 400
-        elif 'ssl' in error_msg.lower():
-            return jsonify({
-                'success': False,
-                'message': '❌ SSL error. For localhost, use HTTP (not HTTPS).'
-            }), 400
-        else:
-            return jsonify({
-                'success': False,
-                'message': f'❌ Connection error: {error_msg}'
+                'message': 'Authentication failed. Check your keys.'
             }), 400
 
-@app.route('/api/woocommerce/config', methods=['POST'])
-def save_woocommerce_config():
-    """Save WooCommerce configuration"""
-    try:
-        data = request.json
-        store_url = data.get('storeUrl', '').strip()
-        
-        # Remove trailing slash
-        if store_url.endswith('/'):
-            store_url = store_url[:-1]
-        
-        woo_config['url'] = store_url
-        woo_config['consumer_key'] = data.get('consumerKey', '').strip()
-        woo_config['consumer_secret'] = data.get('consumerSecret', '').strip()
-        
-        print(f"Configuration saved: {woo_config['url']}")
-        
-        return jsonify({'success': True, 'message': 'Configuration saved successfully'})
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Connection failed - Check your keys.'
+            }), 400
+
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
+        return jsonify({
+            'success': False,
+            'message': f'Connection error: {str(e)}'
+        }), 400
 
 @app.route('/api/woocommerce/store-info', methods=['GET'])
 def get_store_info():
