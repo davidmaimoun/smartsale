@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { wooCommerceAPI } from '../services/api';
 import type { WooCommerceConfig } from '../types';
 
@@ -11,7 +11,7 @@ const Settings: React.FC = () => {
   });
 
   const [testing, setTesting] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [setSaving] = useState(false);
   const [testResult, setTestResult] = useState<{
     success: boolean;
     message: string;
