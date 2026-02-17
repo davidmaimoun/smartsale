@@ -1,4 +1,6 @@
 import { format, subDays } from 'date-fns';
+import type { SalesMetrics, ProductSale, DailySales } from '../types';
+
 
 // Demo Products
 // Demo product images from Unsplash (unsplash.com)
@@ -265,101 +267,91 @@ export const generateDemoOrders = () => {
 };
 
 // Generate demo sales metrics
-export const generateDemoMetrics = (startDate: string, endDate: string) => {
+export const generateDemoMetrics = (startDate: string, endDate: string): SalesMetrics => {
   const orders = generateDemoOrders();
   const start = new Date(startDate);
   const end = new Date(endDate);
-  
-  // Filter orders by date range
+
   const filteredOrders = orders.filter(order => {
     const orderDate = new Date(order.date_created);
     return orderDate >= start && orderDate <= end;
   });
-  
+
   let totalRevenue = 0;
   let totalSales = 0;
-  const productSales: any = {};
-  const dailySales: any = {};
-  
+
+  // ✅ Typés explicitement
+  const productSales: Record<number, ProductSale> = {};
+  const dailySales: Record<string, DailySales> = {};
+
   filteredOrders.forEach(order => {
     if (order.status !== 'completed' && order.status !== 'processing') return;
-    
+
     totalRevenue += parseFloat(order.total);
-    
+
     const dateKey = format(new Date(order.date_created), 'yyyy-MM-dd');
     if (!dailySales[dateKey]) {
-      dailySales[dateKey] = {
-        date: dateKey,
-        sales: 0,
-        orders: 0,
-        revenue: 0
-      };
+      dailySales[dateKey] = { date: dateKey, sales: 0, orders: 0, revenue: 0 };
     }
-    
+
     dailySales[dateKey].orders += 1;
     dailySales[dateKey].revenue += parseFloat(order.total);
-    
+
     order.line_items.forEach((item: any) => {
       totalSales += item.quantity;
       dailySales[dateKey].sales += item.quantity;
-      
+
       if (!productSales[item.product_id]) {
         productSales[item.product_id] = {
           id: item.product_id,
           name: item.name,
           quantity: 0,
-          revenue: 0
+          revenue: 0,
         };
       }
-      
+
       productSales[item.product_id].quantity += item.quantity;
       productSales[item.product_id].revenue += parseFloat(item.total);
     });
   });
-  
-  const salesByDay = Object.values(dailySales).sort((a: any, b: any) => 
-    a.date.localeCompare(b.date)
-  );
-  
-  const topProducts = Object.values(productSales)
-    .sort((a: any, b: any) => b.revenue - a.revenue)
+
+  // ✅ Object.values() retourne maintenant ProductSale[] et DailySales[]
+  const salesByDay: DailySales[] = Object.values(dailySales)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const topProducts: ProductSale[] = Object.values(productSales)
+    .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
-  
-  // Calculate previous period for comparison
+
   const daysDiff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
   const prevStart = subDays(start, daysDiff);
   const prevEnd = subDays(end, 1);
-  
+
   const prevOrders = orders.filter(order => {
     const orderDate = new Date(order.date_created);
     return orderDate >= prevStart && orderDate <= prevEnd;
   });
-  
+
   const prevRevenue = prevOrders.reduce((sum, o) => sum + parseFloat(o.total), 0);
   const prevOrderCount = prevOrders.filter(o => o.status === 'completed' || o.status === 'processing').length;
   const prevSales = prevOrders.reduce((sum, o) => {
     return sum + o.line_items.reduce((s: number, i: any) => s + i.quantity, 0);
   }, 0);
-  
-  const revenueChange = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 100;
-  const ordersChange = prevOrderCount > 0 ? ((filteredOrders.length - prevOrderCount) / prevOrderCount) * 100 : 100;
-  const salesChange = prevSales > 0 ? ((totalSales - prevSales) / prevSales) * 100 : 100;
-  
+
   return {
-    totalRevenue: totalRevenue,
+    totalRevenue,
     totalOrders: filteredOrders.length,
-    totalSales: totalSales,
+    totalSales,
     averageOrderValue: filteredOrders.length > 0 ? totalRevenue / filteredOrders.length : 0,
-    topProducts: topProducts,
-    salesByDay: salesByDay,
+    topProducts,
+    salesByDay,
     previousPeriodComparison: {
-      revenueChange: revenueChange,
-      ordersChange: ordersChange,
-      salesChange: salesChange
-    }
+      revenueChange: prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 100,
+      ordersChange: prevOrderCount > 0 ? ((filteredOrders.length - prevOrderCount) / prevOrderCount) * 100 : 100,
+      salesChange: prevSales > 0 ? ((totalSales - prevSales) / prevSales) * 100 : 100,
+    },
   };
 };
-
 // Generate demo product ratings
 export const generateDemoRatings = (limit: number = 10) => {
   const bestRated = [...DEMO_PRODUCTS]
