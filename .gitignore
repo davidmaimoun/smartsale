@@ -26,3 +26,5 @@ dist-ssr
 apikey.txt
 venv
 test
+
+.env
