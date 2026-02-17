@@ -852,6 +852,127 @@ input:focus + .slider {
 
 
 
+/* ── empty-state.css ── */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 5rem 2rem;
+  margin: 2rem auto;
+  max-width: 480px;
+}
+
+/* Cercle animé autour de l'icône */
+.empty-state-icon-wrapper {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 2rem;
+}
+
+.empty-state-icon-wrapper::before,
+.empty-state-icon-wrapper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(14, 165, 233, 0.2);
+  animation: ripple 2.5s ease-out infinite;
+}
+
+.empty-state-icon-wrapper::after {
+  animation-delay: 1.2s;
+}
+
+@keyframes ripple {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1.9); opacity: 0;   }
+}
+
+.empty-state-icon-bg {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(37, 99, 235, 0.08));
+  border: 1.5px solid rgba(14, 165, 233, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  position: relative;
+  z-index: 1;
+}
+
+.empty-state h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.01em;
+}
+
+.empty-state p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 2rem;
+}
+
+.empty-state p strong {
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+/* Les 2 pills d'action */
+.empty-state-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.empty-state-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.empty-state-pill.primary {
+  background: var(--primary-dark);
+  color: #f0f9ff;
+  border: none;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.3);
+}
+
+.empty-state-pill.primary:hover {
+  background: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+}
+
+.empty-state-pill.secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-color, #bae6fd);
+}
+
+.empty-state-pill.secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: rgba(14, 165, 233, 0.06);
+}
+
+
 /* Responsive adjustments for data grid */
 @media (max-width: 480px) {
   .data-grid {

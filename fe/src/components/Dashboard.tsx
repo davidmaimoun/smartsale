@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { format, subDays } from 'date-fns';
 import {
   TrendingUp, TrendingDown, ShoppingCart,
-  DollarSign, Package, Users, Calendar,
+  DollarSign, Package, Users, Calendar, PlugZap,
+  Settings,
+  FlaskConical,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -13,71 +15,67 @@ import type { SalesMetrics } from '../types';
 import ProductRatings from './ProductRatings';
 import BestSellers from './BestSellers';
 import DemoModeToggle from './DemoModeToggle';
-import { useDemoMode } from '../contexts/DemoContext';
 import DatePills from './DatePills';
+import { useDemoMode } from '../contexts/DemoContext';
+import { useConnection } from '../contexts/ConnectionContext';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState({
     startDate: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd'),
   });
-  const [metrics, setMetrics] = useState<SalesMetrics | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [metrics, setMetrics]   = useState<SalesMetrics | null>(null);
+  const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState<string | null>(null);
   const [activeDays, setActiveDays] = useState<number | null>(7);
 
+  const { isDemoMode }              = useDemoMode();
+  const { isConnected, isChecking } = useConnection();
 
-  const { isDemoMode } = useDemoMode();
+  const navigate = useNavigate();
+  const { toggleDemoMode } = useDemoMode();
 
-  // ✅ isDemoMode dans les deps → re-fetch automatique au toggle
+  // ✅ Ne fetch que si demo OU connecté — jamais à vide
+  const canFetch = isDemoMode || isConnected === true;
+
   useEffect(() => {
-    setMetrics(null);
-    fetchMetrics();
-  }, [dateRange, isDemoMode]);
+    if (canFetch) {
+      setMetrics(null);
+      fetchMetrics();
+    }
+  }, [dateRange, isDemoMode, isConnected]);
 
   const fetchMetrics = async () => {
+    if (!canFetch) return;
     setLoading(true);
     setError(null);
     try {
-      // Le Proxy choisit demo ou real via getDemoModeValue()
       const data = await wooCommerceAPI.getSalesMetrics(
         dateRange.startDate,
         dateRange.endDate
       );
       setMetrics(data);
     } catch (err) {
-      setError("Please connect to your WooCommerce store from the 'Settings' page or activate the 'Demo Mode'.");
+      setError("Failed to load data. Please check your connection.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setDateRange({ ...dateRange, [e.target.name]: e.target.value });
-  // };
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setActiveDays(null);
+    setDateRange({ ...dateRange, [e.target.name]: e.target.value });
+  };
 
-  // const handleQuickDate = (days: number) => {
-  //   setDateRange({
-  //     startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
-  //     endDate: format(new Date(), 'yyyy-MM-dd'),
-  //   });
-  // };
-
-  // 3. Handler
-const handleQuickDate = (days: number) => {
-  setActiveDays(days);
-  setDateRange({
-    startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
-    endDate: format(new Date(), 'yyyy-MM-dd'),
-  });
-};
-
-// 4. Reset si date custom
-const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setActiveDays(null);
-  setDateRange({ ...dateRange, [e.target.name]: e.target.value });
-};
+  const handleQuickDate = (days: number) => {
+    setActiveDays(days);
+    setDateRange({
+      startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
+      endDate: format(new Date(), 'yyyy-MM-dd'),
+    });
+  };
 
   const MetricCard: React.FC<{
     title: string;
@@ -101,6 +99,64 @@ const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     </div>
   );
 
+  // ── États d'affichage ─────────────────────────────────────
+
+  // 1. Vérification de la session en cours
+  if (isChecking) {
+    return (
+      <div className="loading">
+        <div className="spinner"></div>
+        <p>Checking connection...</p>
+      </div>
+    );
+  }
+
+  // 2. Ni demo ni connecté → invite à agir
+  if (!canFetch) {
+    
+    return (
+      <div>
+        <div className="page-header">
+          <h2>Dashboard</h2>
+          <p>Monitor your WooCommerce store performance in real-time</p>
+        </div>
+
+        <DemoModeToggle />
+       
+        <div className="empty-state">
+
+          {/* Icône avec animation ripple */}
+          <div className="empty-state-icon-wrapper">
+            <div className="empty-state-icon-bg">
+              <PlugZap size={38} strokeWidth={1.5} />
+            </div>
+          </div>
+
+          <h3>No data source connected</h3>
+
+          <p>
+            Enable <strong>Demo Mode</strong> to explore with sample data,<br />
+            or connect your <strong>WooCommerce store</strong> in Settings.
+          </p>
+
+          {/* Pills d'action */}
+          <div className="empty-state-actions">
+            <button className="empty-state-pill primary" onClick={toggleDemoMode}>
+              <FlaskConical size={14} />
+              Try Demo Mode
+            </button>
+            <button className="empty-state-pill secondary" onClick={() => navigate('/settings')}>
+              <Settings size={14} />
+              Go to Settings
+            </button>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Chargement initial
   if (loading && !metrics) {
     return (
       <div className="loading">
@@ -110,6 +166,7 @@ const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     );
   }
 
+  // ── Dashboard principal ───────────────────────────────────
   return (
     <div>
       <div className="page-header">
@@ -117,7 +174,6 @@ const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         <p>Monitor your WooCommerce store performance in real-time</p>
       </div>
 
-      {/* Demo Mode Toggle */}
       <DemoModeToggle />
 
       {error && (
@@ -156,10 +212,7 @@ const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 Apply Filter
               </button>
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-              <DatePills activeDays={activeDays} onChange={handleQuickDate} />
-
-            </div>
+            <DatePills activeDays={activeDays} onChange={handleQuickDate} />
           </div>
 
           {/* Metrics Grid */}

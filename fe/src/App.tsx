@@ -5,6 +5,7 @@ import Settings from './components/Settings';
 import './App.css';
 import Products from './components/Products';
 import { DemoProvider } from './contexts/DemoContext';
+import { ConnectionProvider } from './contexts/ConnectionContext';
 
 function Sidebar() {
   const location = useLocation();
@@ -66,19 +67,21 @@ function AIInsights() {
 function App() {
   return (
     <DemoProvider>
-      <Router>
-        <div className="app">
-          <Sidebar />
-          <main className="main-content">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/insights" element={<AIInsights />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/products" element={<Products />} />
-            </Routes>
-          </main>
-        </div>
-      </Router>
+      <ConnectionProvider>
+        <Router>
+          <div className="app">
+            <Sidebar />
+            <main className="main-content">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/insights" element={<AIInsights />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/products" element={<Products />} />
+              </Routes>
+            </main>
+          </div>
+        </Router>
+      </ConnectionProvider>
     </DemoProvider>
   );
 }

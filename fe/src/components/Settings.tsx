@@ -2,8 +2,12 @@ import React, { useState } from 'react';
 import { CheckCircle, AlertCircle, XCircle, Unplug } from 'lucide-react';
 import { wooCommerceAPI } from '../services/api';
 import type { WooCommerceConfig } from '../types';
+import { useConnection } from '../contexts/ConnectionContext';
 
 const Settings: React.FC = () => {
+  // ✅ useConnection INSIDE le composant
+  const { setConnected } = useConnection();
+
   const [config, setConfig] = useState<WooCommerceConfig>({
     storeUrl: '',
     consumerKey: '',
@@ -11,7 +15,7 @@ const Settings: React.FC = () => {
   });
 
   const [connecting, setConnecting] = useState(false);
-  const [resetting, setResetting] = useState(false);
+  const [resetting, setResetting]   = useState(false);
   const [connectResult, setConnectResult] = useState<{
     success: boolean;
     message: string;
@@ -27,15 +31,14 @@ const Settings: React.FC = () => {
     setConnectResult(null);
     try {
       const test = await wooCommerceAPI.testConnection(config);
-      setConnectResult({
-        success: test.success,
-        message: test.message || (test.success ? 'Connection successful!' : 'Connection failed.'),
-      });
-    } catch (error) {
-      setConnectResult({
-        success: false,
-        message: 'Authentication failed - Please check your keys.',
-      });
+      if (test.success) {
+        setConnected(true);
+        setConnectResult({ success: true, message: test.message || 'Connection successful!' });
+      } else {
+        setConnectResult({ success: false, message: test.message || 'Connection failed.' });
+      }
+    } catch {
+      setConnectResult({ success: false, message: 'Authentication failed - Please check your keys.' });
     } finally {
       setConnecting(false);
     }
@@ -47,6 +50,7 @@ const Settings: React.FC = () => {
     try {
       await wooCommerceAPI.disconnect();
       setConfig({ storeUrl: '', consumerKey: '', consumerSecret: '' });
+      setConnected(false);
       setConnectResult({ success: true, message: 'Credentials cleared successfully.' });
     } catch {
       setConnectResult({ success: false, message: 'Failed to reset credentials.' });
@@ -56,7 +60,7 @@ const Settings: React.FC = () => {
   };
 
   const isFormFilled = config.storeUrl && config.consumerKey && config.consumerSecret;
-  const isDisabled = connecting || !isFormFilled;
+  const isDisabled   = connecting || !isFormFilled;
 
   return (
     <div>
@@ -108,7 +112,6 @@ const Settings: React.FC = () => {
             />
           </div>
 
-          {/* Info box */}
           <div className="settings-info-box">
             <AlertCircle size={20} className="settings-info-icon" style={{ flexShrink: 0, marginTop: '2px' }} />
             <div style={{ fontSize: '0.875rem' }}>
@@ -123,18 +126,13 @@ const Settings: React.FC = () => {
             </div>
           </div>
 
-          {/* Result message */}
           {connectResult && (
             <div className={`settings-result ${connectResult.success ? 'success' : 'error'}`}>
-              {connectResult.success
-                ? <CheckCircle size={20} />
-                : <XCircle size={20} />
-              }
+              {connectResult.success ? <CheckCircle size={20} /> : <XCircle size={20} />}
               <span>{connectResult.message}</span>
             </div>
           )}
 
-          {/* Buttons */}
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               className="btn btn-primary"
