@@ -5,36 +5,33 @@
 }
 
 :root {
-  /* Couleurs principales */
-  --primary: #60a5fa;          /* bleu pastel clair */
-  --primary-dark: #3b82f6;     /* bleu un peu plus soutenu */
-  --secondary: #38bdf8;        /* cyan doux */
-  --success: #27c079;          /* vert menthe */
-  --warning: #facc15;          /* jaune doux */
-  --danger: #f87171;           /* rouge pastel léger */
+  --primary:          #0894d4;   /* bleu ciel vif */
+  --primary-dark:     #0375ad;   /* bleu océan soutenu */
+  --secondary:        #38bdf8;   /* cyan doux */
+  --success:          #10b981;   /* vert confirmation */
+  --warning:          #f59e0b;   /* ambre */
+  --danger:           #f87171;   /* corail */
 
-  /* Fonds */
-  --bg-primary: #f0f9ff;       /* bleu très clair / ciel */
-  --bg-secondary: #e3edf3;     /* bleu pastel léger */
+  --bg-primary:       #f0f9ff;   /* bleu très clair */
+  --bg-secondary:     #ffffff;   /* cartes blanc pur */
 
-  /* Textes */
-  --text-primary: #1e3a8a;     /* bleu foncé pour contraste */
-  --text-secondary: #1e40af;   /* bleu moyen */
-  --text-muted: #64748b;       /* gris-bleu doux */
+  --text-primary:     #0c4a6e;   /* bleu nuit lisible */
+  --text-secondary:   #075985;   /* bleu moyen */
+  --text-muted:       #64748b;   /* gris-bleu neutre */
 
-  /* Bordures / séparateurs */
-  --border: 0.5px solid #a7ceff;           /* gris clair neutre */
-  --box-shadow: 0 0 5px rgb(182, 182, 231);
-  --card-radius: 0.5rem;
+  --border:           0.5px solid #bae6fd;
+  --box-shadow:       0 2px 12px rgba(14, 165, 233, 0.10);
+  --card-radius:      0.75rem;
+
+  --gradient-accent:  linear-gradient(135deg, #0ea5e9, #2563eb);
 }
 
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-family: "Nunito", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
@@ -686,13 +683,18 @@ body {
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 22px;
+  width: 22px;
   left: 2px;
   bottom: 2px;
   background-color: var(--text-muted);
   transition: 0.3s;
   border-radius: 50%;
+}
+
+input + .slider {
+  background-color: var(--bg-primary);
+  border-color: var(--primary);
 }
 
 input:checked + .slider {
@@ -732,6 +734,50 @@ input:focus + .slider {
   }
 }
 
+
+/* Quick Date Pills */
+
+.quick-date-pills {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.date-pill {
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.date-pill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+.date-pill.active {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 600;
+}
+
+
+@media (prefers-color-scheme: light) {
+  .date-pill.active {
+    background: var(--primary);
+    color: #f8fafc;
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .demo-mode-toggle {
@@ -747,6 +793,63 @@ input:focus + .slider {
     align-self: flex-start;
   }
 }
+
+/* Settings info box */
+.settings-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(14, 165, 233, 0.08);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+.settings-info-icon {
+  color: var(--primary);
+}
+
+/* Result message */
+.settings-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.settings-result.success {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.settings-result.error {
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: var(--danger);
+}
+
+/* Reset button */
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  padding: 0.5rem 1rem;
+  border-radius: var(--card-radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reset:hover:not(:disabled) {
+  background: rgba(248, 113, 113, 0.08);
+}
+
 
 
 /* Responsive adjustments for data grid */

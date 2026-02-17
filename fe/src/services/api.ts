@@ -11,9 +11,11 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,  // ← envoie le cookie de session à chaque requête
 });
 
 api.interceptors.response.use(
@@ -114,6 +116,11 @@ export const wooCommerceAPI = {
       orderIds.map((id) => api.get(`/woocommerce/order-notes/${id}`))
     );
     return results.flatMap((res) => res.data.notes || []);
+  },
+
+  disconnect: async () => {
+    const response = await api.post('/woocommerce/disconnect');
+    return response.data;
   },
 };
 

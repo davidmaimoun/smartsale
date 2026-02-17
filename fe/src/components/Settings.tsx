@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, XCircle, Unplug } from 'lucide-react';
 import { wooCommerceAPI } from '../services/api';
 import type { WooCommerceConfig } from '../types';
 
@@ -7,10 +7,11 @@ const Settings: React.FC = () => {
   const [config, setConfig] = useState<WooCommerceConfig>({
     storeUrl: '',
     consumerKey: '',
-    consumerSecret: 'cs_e2403b065efee48155156b84fc76aefd001735dc',
+    consumerSecret: '',
   });
 
   const [connecting, setConnecting] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [connectResult, setConnectResult] = useState<{
     success: boolean;
     message: string;
@@ -22,39 +23,40 @@ const Settings: React.FC = () => {
   };
 
   const connectToStore = async () => {
-  setConnecting(true);
-  setConnectResult(null);
-
-  try {
-    const test = await wooCommerceAPI.testConnection(config);
-
-    console.log(test)
-    if (!test.success) {
+    setConnecting(true);
+    setConnectResult(null);
+    try {
+      const test = await wooCommerceAPI.testConnection(config);
+      setConnectResult({
+        success: test.success,
+        message: test.message || (test.success ? 'Connection successful!' : 'Connection failed.'),
+      });
+    } catch (error) {
       setConnectResult({
         success: false,
-        message: test.message || 'Connection test failed',
+        message: 'Authentication failed - Please check your keys.',
       });
-      return;
+    } finally {
+      setConnecting(false);
     }
+  };
 
-    setConnectResult({
-      success: true,
-      message:  test.message || 'Connection successful and configuration saved!',
-    });
+  const resetCredentials = async () => {
+    setResetting(true);
+    setConnectResult(null);
+    try {
+      await wooCommerceAPI.disconnect();
+      setConfig({ storeUrl: '', consumerKey: '', consumerSecret: '' });
+      setConnectResult({ success: true, message: 'Credentials cleared successfully.' });
+    } catch {
+      setConnectResult({ success: false, message: 'Failed to reset credentials.' });
+    } finally {
+      setResetting(false);
+    }
+  };
 
-  } catch (error) {
-    const msg =
-      error instanceof Error ? error.message : 'An error occurred';
-
-    console.log(msg)
-    setConnectResult({
-      success: false,
-      message: 'Authentication failed - Please check your keys.',
-    });
-  } finally {
-    setConnecting(false);
-  }
-};
+  const isFormFilled = config.storeUrl && config.consumerKey && config.consumerSecret;
+  const isDisabled = connecting || !isFormFilled;
 
   return (
     <div>
@@ -63,7 +65,7 @@ const Settings: React.FC = () => {
         <p>Configure your WooCommerce store connection</p>
       </div>
 
-      <div className="" style={{ maxWidth: '800px' }}>
+      <div style={{ maxWidth: '800px' }}>
         <div className="chart-header">
           <h3>WooCommerce API Configuration</h3>
           <p>Enter your WooCommerce REST API credentials</p>
@@ -106,67 +108,60 @@ const Settings: React.FC = () => {
             />
           </div>
 
-          <div
-            style={{
-              padding: '1rem',
-              background: 'rgba(99, 102, 241, 0.1)',
-              borderRadius: '0.5rem',
-              border: '1px solid rgba(99, 102, 241, 0.2)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-              <AlertCircle size={20} color="#6366f1" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div style={{ fontSize: '0.875rem',  }}>
-                <strong>How to get API credentials:</strong>
-                <ol style={{ marginTop: '0.5rem', marginLeft: '1rem' }}>
-                  <li>Go to WooCommerce → Settings → Advanced → REST API</li>
-                  <li>Click "Add key"</li>
-                  <li>Set permissions to "Read"</li>
-                  <li>Click "Generate API key"</li>
-                  <li>Copy the Consumer key and Consumer secret</li>
-                </ol>
-              </div>
+          {/* Info box */}
+          <div className="settings-info-box">
+            <AlertCircle size={20} className="settings-info-icon" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '0.875rem' }}>
+              <strong>How to get API credentials:</strong>
+              <ol style={{ marginTop: '0.5rem', marginLeft: '1rem' }}>
+                <li>Go to WooCommerce → Settings → Advanced → REST API</li>
+                <li>Click "Add key"</li>
+                <li>Set permissions to "Read"</li>
+                <li>Click "Generate API key"</li>
+                <li>Copy the Consumer key and Consumer secret</li>
+              </ol>
             </div>
           </div>
 
-
+          {/* Result message */}
           {connectResult && (
-            <div
-              style={{
-                padding: '1rem',
-                background: connectResult.success
-                  ? 'rgba(16, 185, 129, 0.1)'
-                  : 'rgba(239, 68, 68, 0.1)',
-                borderRadius: '0.5rem',
-                border: connectResult.success
-                  ? '1px solid rgba(16, 185, 129, 0.2)'
-                  : '1px solid rgba(239, 68, 68, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-              }}
-            >
-              {connectResult.success ? (
-                <CheckCircle size={20} color="#10b981" />
-              ) : (
-                <XCircle size={20} color="#ef4444" />
-              )}
-              <span style={{ color: connectResult.success ? '#10b981' : '#ef4444' }}>
-                {connectResult.message}
-              </span>
+            <div className={`settings-result ${connectResult.success ? 'success' : 'error'}`}>
+              {connectResult.success
+                ? <CheckCircle size={20} />
+                : <XCircle size={20} />
+              }
+              <span>{connectResult.message}</span>
             </div>
           )}
 
-
+          {/* Buttons */}
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button
               className="btn btn-primary"
               onClick={connectToStore}
-              disabled={connecting || !config.storeUrl || !config.consumerKey || !config.consumerSecret}
+              disabled={isDisabled}
+              style={{
+                opacity: isDisabled ? 0.4 : 1,
+                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                transition: 'opacity 0.2s ease',
+              }}
             >
-              {connecting ? 'Connecting to the store...' : 'Connection'}
+              {connecting ? 'Connecting...' : 'Connect'}
             </button>
-            
+
+            <button
+              className="btn btn-reset"
+              onClick={resetCredentials}
+              disabled={resetting}
+              style={{
+                opacity: resetting ? 0.4 : 1,
+                cursor: resetting ? 'not-allowed' : 'pointer',
+                transition: 'opacity 0.2s ease',
+              }}
+            >
+              <Unplug size={16} />
+              {resetting ? 'Resetting...' : 'Reset Credentials'}
+            </button>
           </div>
         </div>
       </div>

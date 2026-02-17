@@ -14,6 +14,7 @@ import ProductRatings from './ProductRatings';
 import BestSellers from './BestSellers';
 import DemoModeToggle from './DemoModeToggle';
 import { useDemoMode } from '../contexts/DemoContext';
+import DatePills from './DatePills';
 
 const Dashboard: React.FC = () => {
   const [dateRange, setDateRange] = useState({
@@ -23,6 +24,8 @@ const Dashboard: React.FC = () => {
   const [metrics, setMetrics] = useState<SalesMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeDays, setActiveDays] = useState<number | null>(7);
+
 
   const { isDemoMode } = useDemoMode();
 
@@ -43,23 +46,38 @@ const Dashboard: React.FC = () => {
       );
       setMetrics(data);
     } catch (err) {
-      setError("Please connect to your WooCommerce store from the 'Settings' page.");
+      setError("Please connect to your WooCommerce store from the 'Settings' page or activate the 'Demo Mode'.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDateRange({ ...dateRange, [e.target.name]: e.target.value });
-  };
+  // const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   setDateRange({ ...dateRange, [e.target.name]: e.target.value });
+  // };
 
-  const handleQuickDate = (days: number) => {
-    setDateRange({
-      startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
-      endDate: format(new Date(), 'yyyy-MM-dd'),
-    });
-  };
+  // const handleQuickDate = (days: number) => {
+  //   setDateRange({
+  //     startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
+  //     endDate: format(new Date(), 'yyyy-MM-dd'),
+  //   });
+  // };
+
+  // 3. Handler
+const handleQuickDate = (days: number) => {
+  setActiveDays(days);
+  setDateRange({
+    startDate: format(subDays(new Date(), days), 'yyyy-MM-dd'),
+    endDate: format(new Date(), 'yyyy-MM-dd'),
+  });
+};
+
+// 4. Reset si date custom
+const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setActiveDays(null);
+  setDateRange({ ...dateRange, [e.target.name]: e.target.value });
+};
 
   const MetricCard: React.FC<{
     title: string;
@@ -139,10 +157,8 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
             <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-              <button className="btn" onClick={() => handleQuickDate(1)}>Today</button>
-              <button className="btn" onClick={() => handleQuickDate(7)}>Last 7 Days</button>
-              <button className="btn" onClick={() => handleQuickDate(30)}>Last 30 Days</button>
-              <button className="btn" onClick={() => handleQuickDate(90)}>Last 90 Days</button>
+              <DatePills activeDays={activeDays} onChange={handleQuickDate} />
+
             </div>
           </div>
 
