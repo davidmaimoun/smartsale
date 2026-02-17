@@ -3,6 +3,7 @@ import { format, subDays } from 'date-fns';
 // Demo Products
 // Demo product images from Unsplash (unsplash.com)
 // Free to use under Unsplash License: unsplash.com/license
+
 export const DEMO_PRODUCTS = [
   {
     id: 1001,
