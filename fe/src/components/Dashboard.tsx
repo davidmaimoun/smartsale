@@ -29,6 +29,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
   const [activeDays, setActiveDays] = useState<number | null>(7);
+  const [showLoadingSpinner, setShowLoadingSpinner] = useState(false);
 
   const { isDemoMode }              = useDemoMode();
   const { isConnected, isChecking } = useConnection();
@@ -40,11 +41,21 @@ const Dashboard: React.FC = () => {
   const canFetch = isDemoMode || isConnected === true;
 
   useEffect(() => {
+    if (isChecking) {
+      const timer = setTimeout(() => {
+        setShowLoadingSpinner(true);
+      }, 1500);  // ← 1.5 secondes, ajuste selon ton goût
+      
+      return () => clearTimeout(timer);
+    } else {
+      setShowLoadingSpinner(false);
+    }
+
     if (canFetch) {
       setMetrics(null);
       fetchMetrics();
     }
-  }, [dateRange, isDemoMode, isConnected]);
+  }, [dateRange, isDemoMode, isConnected, isChecking]);
 
   const fetchMetrics = async () => {
     if (!canFetch) return;
@@ -103,6 +114,10 @@ const Dashboard: React.FC = () => {
 
   // 1. Vérification de la session en cours
   if (isChecking) {
+    if (!showLoadingSpinner) {
+      return null; 
+    }
+    
     return (
       <div className="loading">
         <div className="spinner"></div>
